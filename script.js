@@ -258,4 +258,5 @@ function clearLineup() { if(confirm("Clear order?")) { document.getElementById('
 
 Sortable.create(document.getElementById('lineup'), {
     animation: 150, onEnd: () => { saveLineupState(); updateHighlighting(); }
+
 });
