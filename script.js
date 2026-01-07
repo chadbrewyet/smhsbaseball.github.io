@@ -26,11 +26,18 @@ function initDatabase() {
 
 // SPOTIFY AUTH & PLAYER
 function loginToSpotify() {
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES.join(' '))}`;
-    window.location.href = authUrl;
+    // FIXED: Changed http to https and ensured parameters are clean
+    const url = new URL('https://accounts.spotify.com/authorize');
+    url.searchParams.append('client_id', CLIENT_ID);
+    url.searchParams.append('response_type', 'token');
+    url.searchParams.append('redirect_uri', REDIRECT_URI);
+    url.searchParams.append('scope', SCOPES.join(' '));
+    
+    window.location.href = url.toString();
 }
 
 function handleAuth() {
+    // Extract token from URL hash
     const hash = window.location.hash.substring(1).split('&').reduce((initial, item) => {
         if (item) { var parts = item.split('='); initial[parts[0]] = decodeURIComponent(parts[1]); }
         return initial;
@@ -38,11 +45,16 @@ function handleAuth() {
 
     if (hash.access_token) {
         access_token = hash.access_token;
-        window.location.hash = "";
+        // Clean the URL so the token doesn't sit in the address bar
+        window.history.replaceState(null, null, window.location.pathname);
+        
         initSpotifyPlayer();
         document.getElementById('auth-status').textContent = "(Connected)";
         document.getElementById('auth-status').style.color = "#1DB954";
         document.getElementById('spotify-login-btn').style.display = "none";
+    } else if (hash.error) {
+        console.error("Spotify Auth Error:", hash.error);
+        alert("Spotify Error: " + hash.error);
     }
 }
 
@@ -57,10 +69,6 @@ function initSpotifyPlayer() {
         player.addListener('ready', ({ device_id: id }) => { 
             device_id = id;
             console.log("Spotify Ready - Device ID:", id);
-        });
-
-        player.addListener('not_ready', ({ device_id }) => {
-            console.log('Device ID has gone offline', device_id);
         });
 
         player.connect();
@@ -85,9 +93,7 @@ async function toggleSong(spotifyUri, element) {
     document.body.classList.add('audio-active');
     currentBtn = element;
     element.classList.add('playing', 'playing-active');
-    const trigger = element.querySelector('.play-trigger');
-    if (trigger) trigger.classList.add('playing-active');
-
+    
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
         method: 'PUT',
         body: JSON.stringify({ uris: [spotifyUri] }),
@@ -119,8 +125,6 @@ function fadeOutSpotify() {
 function resetStatesAfterAudio() {
     if (currentBtn) {
         currentBtn.classList.remove('playing', 'stopping', 'playing-active');
-        const trigger = currentBtn.querySelector('.play-trigger');
-        if (trigger) trigger.classList.remove('playing-active');
     }
     document.body.classList.remove('audio-active');
     currentBtn = null;
