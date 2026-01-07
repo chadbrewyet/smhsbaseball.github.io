@@ -1,5 +1,8 @@
 const CLIENT_ID = 'e299f9731add487cb32f1c4e3989c847'; 
-const REDIRECT_URI = window.location.origin; 
+
+// HARDCODE THIS to match your GitHub URL exactly
+const REDIRECT_URI = 'https://chadbrewyet.github.io/smhsbaseball.github.io/'; 
+
 const SCOPES = ['streaming', 'user-read-playback-state', 'user-modify-playback-state'];
 
 let db, player, device_id, access_token;
@@ -260,3 +263,4 @@ Sortable.create(document.getElementById('lineup'), {
     animation: 150, onEnd: () => { saveLineupState(); updateHighlighting(); }
 
 });
+
